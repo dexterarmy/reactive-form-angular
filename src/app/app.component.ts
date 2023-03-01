@@ -1,50 +1,60 @@
-import { Component, ViewChild } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { FormArray, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent {
-  title = 'angular-weather';
-  defaultCountry = 'india';
-  gender = [
-    {id: '1', value: 'Male'},
-    {id: '2', value: 'Female'},
-    {id: '3', value: 'other'}
-  ];
-  defaultGender = 'Male';
-  firstName : string ;
-  lastName: string ;
-  email: string ;
-  gen: string ;
-  country: string ;
-  // form property storing ngForm object
-  @ViewChild('myForm') form: NgForm  ;
+export class AppComponent implements OnInit {
+ 
+  reactiveForm: FormGroup;
 
+  ngOnInit(){
+    this.reactiveForm = new FormGroup({
+      personDetails: new FormGroup({
+        firstname : new FormControl(null, [Validators.required, this.noSpaceAllowed]),
+      }),
+      
+      gender: new FormControl('male'),
+      country: new FormControl('india'),
+      hobbies: new FormControl(null),
+      skills: new FormArray([new FormControl(null,Validators.required)])
+    })
+  }
+  
   onSubmit(){
-    console.log(this.form);
-    this.firstName = this.form.value.personDetails.firstname;
-
-    // this.form.reset();
+    console.log(this.reactiveForm);
   }
 
-  setDefaultValues(){
-    // this.form.value.personDetails.firstName = 'Mohit';
-    // this.form.setValue({
-    //   personDetails: {
-    //     firstName : 'Mohit'
-    //   }
-    // })
-    this.form.form.patchValue({
-      personDetails: {
-        firstname : 'Mohit',
-        lastname: 'sharma',
-        email: 'abc@gmail.com'
-        
-      
-      }
-    });
+   get skillsArray() {
+    return this.reactiveForm.get('skills') as FormArray;
+  }
+
+  addSkill(){
+     (<FormArray>this.reactiveForm.get('skills')).push(new FormControl(null));
+  }
+
+  // custom validator
+  noSpaceAllowed(control: FormControl){
+    if(control.value != null && control.value.indexOf(' ') != -1){
+      return {noSpaceAllowed: true};
+    }
+    return null;
+  }
+
+  //async validator
+  emailNotAllowed(control: FormControl):Promise<any> | Observable<any>{
+    const response = new Promise((resolve,reject)=>{
+      setTimeout(()=>{
+        if(control.value === 'abc@gmail.com'){
+          resolve({emailNotAllowed: true})
+        } else{
+          resolve(null)
+        }
+      },5000)
+    })
+    return response;
   }
 }
